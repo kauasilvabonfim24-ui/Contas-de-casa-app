@@ -64,6 +64,11 @@ function Painel({ email }: { email: string }) {
   const [contas, setContas] = useState<Conta[]>([]);
   const [mes, setMes] = useState(() => new Date().toISOString().slice(0, 7));
   const [form, setForm] = useState({ descricao: "", valor: "", vencimento: new Date().toISOString().slice(0, 10), categoria: "Moradia" });
+  const [pessoas, setPessoas] = useState(1);
+  const [salvarModo, setSalvarModo] = useState<"total" | "parte">("parte");
+
+  const valorNum = Number(form.valor) || 0;
+  const porPessoa = pessoas > 1 ? valorNum / pessoas : valorNum;
 
   async function carregar() {
     const [y, m] = mes.split("-").map(Number) as [number, number];
@@ -77,8 +82,14 @@ function Painel({ email }: { email: string }) {
 
   async function adicionar(e: FormEvent) {
     e.preventDefault();
-    await supabase.from("contas").insert({ descricao: form.descricao, valor: Number(form.valor), vencimento: form.vencimento, categoria: form.categoria });
+    const dividida = pessoas > 1;
+    const valorFinal = dividida && salvarModo === "parte" ? porPessoa : valorNum;
+    const descricao = dividida && salvarModo === "total"
+      ? `${form.descricao} (${brl(porPessoa)}/pessoa × ${pessoas})`
+      : form.descricao;
+    await supabase.from("contas").insert({ descricao, valor: Math.round(valorFinal * 100) / 100, vencimento: form.vencimento, categoria: form.categoria });
     setForm({ ...form, descricao: "", valor: "" });
+    setPessoas(1);
     carregar();
   }
   async function alternar(c: Conta) { await supabase.from("contas").update({ pago: !c.pago }).eq("id", c.id); carregar(); }
@@ -119,6 +130,25 @@ function Painel({ email }: { email: string }) {
           <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} className="rounded-lg border border-input bg-background px-3 py-2">
             {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
           </select>
+          <div className="col-span-2 flex items-center gap-2 sm:col-span-5">
+            <label className="text-sm text-muted-foreground">Dividir por</label>
+            <select value={pessoas} onChange={(e) => setPessoas(Number(e.target.value))} className="rounded-lg border border-input bg-background px-3 py-1.5" aria-label="Número de pessoas">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => <option key={n} value={n}>{n === 1 ? "Não dividir" : `${n} pessoas`}</option>)}
+            </select>
+            {pessoas > 1 && valorNum > 0 && (
+              <p className="text-sm font-semibold text-primary">{brl(porPessoa)} por pessoa</p>
+            )}
+          </div>
+          {pessoas > 1 && valorNum > 0 && (
+            <div className="col-span-2 flex gap-2 sm:col-span-5">
+              <button type="button" onClick={() => setSalvarModo("parte")} className={`flex-1 rounded-lg border px-3 py-1.5 text-sm ${salvarModo === "parte" ? "border-primary bg-primary/10 font-semibold text-primary" : "border-input text-muted-foreground"}`}>
+                Salvar só minha parte ({brl(porPessoa)})
+              </button>
+              <button type="button" onClick={() => setSalvarModo("total")} className={`flex-1 rounded-lg border px-3 py-1.5 text-sm ${salvarModo === "total" ? "border-primary bg-primary/10 font-semibold text-primary" : "border-input text-muted-foreground"}`}>
+                Salvar total ({brl(valorNum)})
+              </button>
+            </div>
+          )}
           <button className="col-span-2 rounded-lg bg-accent py-2 font-semibold text-accent-foreground sm:col-span-5">Adicionar conta</button>
         </form>
         <ul className="space-y-2">
