@@ -64,6 +64,11 @@ function Painel({ email }: { email: string }) {
   const [contas, setContas] = useState<Conta[]>([]);
   const [mes, setMes] = useState(() => new Date().toISOString().slice(0, 7));
   const [form, setForm] = useState({ descricao: "", valor: "", vencimento: new Date().toISOString().slice(0, 10), categoria: "Moradia" });
+  const [pessoas, setPessoas] = useState(1);
+  const [salvarModo, setSalvarModo] = useState<"total" | "parte">("parte");
+
+  const valorNum = Number(form.valor) || 0;
+  const porPessoa = pessoas > 1 ? valorNum / pessoas : valorNum;
 
   async function carregar() {
     const [y, m] = mes.split("-").map(Number) as [number, number];
