@@ -36,7 +36,6 @@ function Index() {
 }
 
 function Entrar() {
-  const [modo, setModo] = useState<"entrar" | "criar">("entrar");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [msg, setMsg] = useState("");
