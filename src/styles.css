@@ -142,3 +142,21 @@
     color: var(--color-foreground);
   }
 }
+
+:root {
+  --background: oklch(0.975 0.01 90);
+  --foreground: oklch(0.25 0.04 200);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.04 200);
+  --primary: oklch(0.34 0.05 200);
+  --primary-foreground: oklch(0.98 0.01 90);
+  --accent: oklch(0.8 0.14 75);
+  --accent-foreground: oklch(0.25 0.04 200);
+  --muted: oklch(0.94 0.01 90);
+  --muted-foreground: oklch(0.5 0.03 200);
+  --border: oklch(0.9 0.01 90);
+  --input: oklch(0.9 0.01 90);
+  --ring: oklch(0.34 0.05 200);
+}
+body { font-family: "Figtree", sans-serif; }
+h1, h2, h3, .font-display { font-family: "Bricolage Grotesque", sans-serif; }
