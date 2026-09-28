@@ -36,17 +36,13 @@ function Index() {
 }
 
 function Entrar() {
-  const [modo, setModo] = useState<"entrar" | "criar">("entrar");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [msg, setMsg] = useState("");
   async function enviar(e: FormEvent) {
     e.preventDefault(); setMsg("");
-    const { error, data } = modo === "entrar"
-      ? await supabase.auth.signInWithPassword({ email, password: senha })
-      : await supabase.auth.signUp({ email, password: senha, options: { emailRedirectTo: window.location.origin } });
-    if (error) setMsg(error.message);
-    else if (modo === "criar" && !data.session) setMsg("Confira seu e-mail para confirmar a conta.");
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) setMsg("E-mail ou senha incorretos.");
   }
   return (
     <main className="flex min-h-screen items-center justify-center bg-primary px-4">
@@ -55,13 +51,10 @@ function Entrar() {
         <p className="mt-1 text-sm text-muted-foreground">Contas de casa e controle</p>
         <form onSubmit={enviar} className="mt-6 space-y-3">
           <input className="w-full rounded-lg border border-input bg-background px-3 py-2" type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <input className="w-full rounded-lg border border-input bg-background px-3 py-2" type="password" placeholder="Senha" minLength={6} value={senha} onChange={(e) => setSenha(e.target.value)} required />
-          <button className="w-full rounded-lg bg-primary py-2 font-semibold text-primary-foreground">{modo === "entrar" ? "Entrar" : "Criar conta"}</button>
+          <input className="w-full rounded-lg border border-input bg-background px-3 py-2" type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+          <button className="w-full rounded-lg bg-primary py-2 font-semibold text-primary-foreground">Entrar</button>
         </form>
         {msg && <p className="mt-3 text-sm text-destructive">{msg}</p>}
-        <button className="mt-4 text-sm text-muted-foreground underline" onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}>
-          {modo === "entrar" ? "Não tem conta? Criar agora" : "Já tenho conta"}
-        </button>
       </div>
     </main>
   );
