@@ -82,8 +82,14 @@ function Painel({ email }: { email: string }) {
 
   async function adicionar(e: FormEvent) {
     e.preventDefault();
-    await supabase.from("contas").insert({ descricao: form.descricao, valor: Number(form.valor), vencimento: form.vencimento, categoria: form.categoria });
+    const dividida = pessoas > 1;
+    const valorFinal = dividida && salvarModo === "parte" ? porPessoa : valorNum;
+    const descricao = dividida && salvarModo === "total"
+      ? `${form.descricao} (${brl(porPessoa)}/pessoa × ${pessoas})`
+      : form.descricao;
+    await supabase.from("contas").insert({ descricao, valor: Math.round(valorFinal * 100) / 100, vencimento: form.vencimento, categoria: form.categoria });
     setForm({ ...form, descricao: "", valor: "" });
+    setPessoas(1);
     carregar();
   }
   async function alternar(c: Conta) { await supabase.from("contas").update({ pago: !c.pago }).eq("id", c.id); carregar(); }
