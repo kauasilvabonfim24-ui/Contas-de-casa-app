@@ -54,7 +54,7 @@ function Entrar() {
           <input className="w-full rounded-lg border border-input bg-background px-3 py-2" type="password" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} required />
           <button className="w-full rounded-lg bg-primary py-2 font-semibold text-primary-foreground">Entrar</button>
         </form>
-        {msg && <p className="mt-3 text-sm text-destructive">{msg}</p>
+        {msg && <p className="mt-3 text-sm text-destructive">{msg}</p>}
       </div>
     </main>
   );
