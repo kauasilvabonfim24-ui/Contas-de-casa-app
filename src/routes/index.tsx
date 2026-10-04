@@ -24,7 +24,7 @@ type Conta = {
 const CATEGORIAS = ["Moradia", "Energia", "Água", "Internet", "Mercado", "Transporte", "Saúde", "Outros"];
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const mesLabel = (mesIso: string) => {
-  const [y, m] = mesIso.split("-").map(Number);
+  const [y = new Date().getFullYear(), m = 1] = mesIso.split("-").map(Number);
   const s = new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
@@ -38,7 +38,8 @@ function Index() {
     return () => data.subscription.unsubscribe();
   }, []);
   if (!ready) return <div className="min-h-screen bg-background" />;
-  return session ? <Painel email={session.user.email ?? ""} nome={session.user.user_metadata?.name as string | undefined} /> : <Entrar />;
+  const nome = session?.user.user_metadata?.["name"];
+  return session ? <Painel email={session.user.email ?? ""} nome={typeof nome === "string" ? nome : ""} /> : <Entrar />;
 }
 
 function Entrar() {
@@ -66,7 +67,7 @@ function Entrar() {
   );
 }
 
-function Painel({ email, nome }: { email: string; nome?: string }) {
+function Painel({ email, nome }: { email: string; nome: string }) {
   const [contas, setContas] = useState<Conta[]>([]);
   const [mes, setMes] = useState(() => new Date().toISOString().slice(0, 7));
   const [form, setForm] = useState({ descricao: "", valor: "", vencimento: new Date().toISOString().slice(0, 10), categoria: "Moradia" });
@@ -210,7 +211,7 @@ function Painel({ email, nome }: { email: string; nome?: string }) {
       {mostrarComprovante && (
         <Comprovante
           mes={mes}
-          nome={nome || email.split("@")[0]}
+          nome={nome || email.split("@")[0] || email}
           total={total}
           pago={pago}
           pendente={pendente}
@@ -333,7 +334,7 @@ function Historico({ mesAtual }: { mesAtual: string }) {
   const max = Math.max(1, ...pontos.map((p) => p.total));
   const media = pontos.reduce((s, p) => s + p.total, 0) / (pontos.length || 1);
   const nomesMes = pontos.map((p) => {
-    const [, mm] = p.mes.split("-").map(Number);
+    const [, mm = 1] = p.mes.split("-").map(Number);
     return new Date(2000, mm - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
   });
 
