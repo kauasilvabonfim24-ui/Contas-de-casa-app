@@ -111,25 +111,25 @@ function Painel({ email, nome }: { email: string; nome?: string }) {
   const qtdPendentes = contas.length - qtdPagas;
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-dvh overflow-x-hidden bg-background pb-[env(safe-area-inset-bottom)]">
       <header className="bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5">
-          <div>
-            <h1 className="text-2xl font-bold">Casa em Dia</h1>
-            <p className="text-xs opacity-80">{email}</p>
+        <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold">Casa em Dia</h1>
+            <p className="truncate text-xs opacity-80">{email}</p>
           </div>
-          <button className="rounded-lg border border-primary-foreground/30 px-3 py-1 text-sm" onClick={() => supabase.auth.signOut()}>Sair</button>
+          <button className="shrink-0 rounded-lg border border-primary-foreground/30 px-3 py-2 text-sm" onClick={() => supabase.auth.signOut()}>Sair</button>
         </div>
       </header>
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+      <div className="mx-auto max-w-3xl space-y-5 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
             <label className="text-sm text-muted-foreground">Mês</label>
-            <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="rounded-lg border border-input bg-card px-3 py-1.5" />
+            <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="min-w-0 w-full rounded-lg border border-input bg-card px-3 py-2 text-base" />
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setAba("contas")} className={`rounded-lg px-3 py-1.5 text-sm font-medium ${aba === "contas" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Contas</button>
-            <button onClick={() => setAba("historico")} className={`rounded-lg px-3 py-1.5 text-sm font-medium ${aba === "historico" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Histórico</button>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => setAba("contas")} className={`rounded-lg px-3 py-2 text-sm font-medium ${aba === "contas" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Contas</button>
+            <button onClick={() => setAba("historico")} className={`rounded-lg px-3 py-2 text-sm font-medium ${aba === "historico" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Histórico</button>
           </div>
         </div>
 
@@ -137,11 +137,11 @@ function Painel({ email, nome }: { email: string; nome?: string }) {
           <Historico mesAtual={mes} />
         ) : (
           <>
-            <section className="grid grid-cols-3 gap-3">
-              {[["Total", total], ["Pago", pago], ["A pagar", pendente]].map(([l, v]) => (
-                <div key={l as string} className="rounded-xl bg-card p-4 shadow-sm">
+            <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+              {[["Total", total], ["Pago", pago], ["A pagar", pendente]].map(([l, v], index) => (
+                <div key={l as string} className={`min-w-0 rounded-xl bg-card p-3 shadow-sm sm:p-4 ${index === 0 ? "col-span-2 sm:col-span-1" : ""}`}>
                   <p className="text-xs text-muted-foreground">{l}</p>
-                  <p className="font-display text-lg font-bold text-primary">{brl(v as number)}</p>
+                  <p className="mt-1 break-all font-display text-base font-bold leading-tight text-primary sm:text-lg">{brl(v as number)}</p>
                 </div>
               ))}
             </section>
@@ -153,49 +153,52 @@ function Painel({ email, nome }: { email: string; nome?: string }) {
               Compartilhar resumo do mês
             </button>
 
-            <form onSubmit={adicionar} className="grid grid-cols-2 gap-2 rounded-xl bg-card p-4 shadow-sm sm:grid-cols-5">
-              <input required placeholder="Descrição" value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} className="col-span-2 rounded-lg border border-input bg-background px-3 py-2" />
-              <input required type="number" step="0.01" min="0" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} className="rounded-lg border border-input bg-background px-3 py-2" />
-              <input required type="date" value={form.vencimento} onChange={(e) => setForm({ ...form, vencimento: e.target.value })} className="rounded-lg border border-input bg-background px-3 py-2" />
-              <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} className="rounded-lg border border-input bg-background px-3 py-2">
+            <form onSubmit={adicionar} className="grid grid-cols-1 gap-2 rounded-xl bg-card p-3 shadow-sm sm:grid-cols-5 sm:p-4">
+              <input required placeholder="Descrição" value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} className="min-w-0 rounded-lg border border-input bg-background px-3 py-2.5 text-base sm:col-span-2" />
+              <input required type="number" inputMode="decimal" step="0.01" min="0" placeholder="Valor" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} className="min-w-0 rounded-lg border border-input bg-background px-3 py-2.5 text-base" />
+              <input required type="date" value={form.vencimento} onChange={(e) => setForm({ ...form, vencimento: e.target.value })} className="min-w-0 rounded-lg border border-input bg-background px-3 py-2.5 text-base" />
+              <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })} className="min-w-0 rounded-lg border border-input bg-background px-3 py-2.5 text-base">
                 {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
               </select>
-              <div className="col-span-2 flex items-center gap-2 sm:col-span-5">
+              <div className="grid min-w-0 grid-cols-1 gap-2 sm:col-span-5 sm:grid-cols-[auto_auto_minmax(0,1fr)] sm:items-center">
                 <label className="text-sm text-muted-foreground">Dividir por</label>
-                <select value={pessoas} onChange={(e) => setPessoas(Number(e.target.value))} className="rounded-lg border border-input bg-background px-3 py-1.5" aria-label="Número de pessoas">
+                <select value={pessoas} onChange={(e) => setPessoas(Number(e.target.value))} className="min-w-0 rounded-lg border border-input bg-background px-3 py-2.5 text-base" aria-label="Número de pessoas">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => <option key={n} value={n}>{n === 1 ? "Não dividir" : `${n} pessoas`}</option>)}
                 </select>
                 {pessoas > 1 && valorNum > 0 && (
-                  <p className="text-sm font-semibold text-primary">{brl(porPessoa)} por pessoa</p>
+                  <p className="min-w-0 break-words text-sm font-semibold text-primary sm:text-right">{brl(porPessoa)} por pessoa</p>
                 )}
               </div>
               {pessoas > 1 && valorNum > 0 && (
-                <div className="col-span-2 flex gap-2 sm:col-span-5">
-                  <button type="button" onClick={() => setSalvarModo("parte")} className={`flex-1 rounded-lg border px-3 py-1.5 text-sm ${salvarModo === "parte" ? "border-primary bg-primary/10 font-semibold text-primary" : "border-input text-muted-foreground"}`}>
+                <div className="grid grid-cols-1 gap-2 sm:col-span-5 sm:grid-cols-2">
+                  <button type="button" onClick={() => setSalvarModo("parte")} className={`min-w-0 rounded-lg border px-3 py-2.5 text-sm ${salvarModo === "parte" ? "border-primary bg-primary/10 font-semibold text-primary" : "border-input text-muted-foreground"}`}>
                     Salvar só minha parte ({brl(porPessoa)})
                   </button>
-                  <button type="button" onClick={() => setSalvarModo("total")} className={`flex-1 rounded-lg border px-3 py-1.5 text-sm ${salvarModo === "total" ? "border-primary bg-primary/10 font-semibold text-primary" : "border-input text-muted-foreground"}`}>
+                  <button type="button" onClick={() => setSalvarModo("total")} className={`min-w-0 rounded-lg border px-3 py-2.5 text-sm ${salvarModo === "total" ? "border-primary bg-primary/10 font-semibold text-primary" : "border-input text-muted-foreground"}`}>
                     Salvar total ({brl(valorNum)})
                   </button>
                 </div>
               )}
-              <button className="col-span-2 rounded-lg bg-accent py-2 font-semibold text-accent-foreground sm:col-span-5">Adicionar conta</button>
+              <button className="rounded-lg bg-accent py-3 font-semibold text-accent-foreground sm:col-span-5">Adicionar conta</button>
             </form>
             <ul className="space-y-2">
               {contas.length === 0 && <li className="text-center text-sm text-muted-foreground">Nenhuma conta neste mês.</li>}
               {contas.map((c) => {
                 const atrasada = !c.pago && c.vencimento < hoje;
                 return (
-                  <li key={c.id} className="flex items-center gap-3 rounded-xl bg-card p-3 shadow-sm">
-                    <input type="checkbox" checked={c.pago} onChange={() => alternar(c)} className="h-5 w-5 accent-primary" aria-label="Marcar como paga" />
-                    <div className="flex-1">
-                      <p className={c.pago ? "text-muted-foreground line-through" : "font-medium"}>{c.descricao}</p>
+                  <li key={c.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 rounded-xl bg-card p-3 shadow-sm">
+                    <input type="checkbox" checked={c.pago} onChange={() => alternar(c)} className="mt-0.5 h-5 w-5 shrink-0 accent-primary" aria-label="Marcar como paga" />
+                    <div className="min-w-0">
+                      <p className={`break-words ${c.pago ? "text-muted-foreground line-through" : "font-medium"}`}>{c.descricao}</p>
                       <p className={`text-xs ${atrasada ? "text-destructive" : "text-muted-foreground"}`}>
                         {c.categoria} · vence {c.vencimento.split("-").reverse().join("/")}{atrasada && " · atrasada"}
                       </p>
+                      <p className="mt-1 break-all font-semibold sm:hidden">{brl(c.valor)}</p>
                     </div>
-                    <p className="font-semibold">{brl(c.valor)}</p>
-                    <button onClick={() => remover(c.id)} className="text-sm text-muted-foreground hover:text-destructive" aria-label="Excluir">✕</button>
+                    <div className="flex shrink-0 items-start gap-2">
+                      <p className="hidden max-w-32 break-all text-right font-semibold sm:block">{brl(c.valor)}</p>
+                      <button onClick={() => remover(c.id)} className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-sm text-muted-foreground hover:text-destructive" aria-label="Excluir">✕</button>
+                    </div>
                   </li>
                 );
               })}
@@ -255,8 +258,8 @@ function Comprovante({
   const agora = new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-foreground/50 px-3 py-[max(0.75rem,env(safe-area-inset-top))]" role="dialog" aria-modal="true">
+      <div className="my-auto w-full max-w-sm">
         <div ref={ref} className="overflow-hidden rounded-2xl bg-card shadow-xl">
           <div className="bg-primary px-5 py-6 text-center text-primary-foreground">
             <p className="text-xs opacity-80">Resumo financeiro</p>
@@ -267,9 +270,9 @@ function Comprovante({
             <p className="mb-3 font-semibold">{nome} · Casa em Dia</p>
             <div className="mb-3 border-t border-dashed border-input" />
             <dl className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><dt className="text-muted-foreground">Total do mês</dt><dd className="font-medium">{brl(total)}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Pago</dt><dd className="font-medium text-primary">{brl(pago)}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">A pagar</dt><dd className="font-medium text-destructive">{brl(pendente)}</dd></div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><dt className="text-muted-foreground">Total do mês</dt><dd className="max-w-40 break-all text-right font-medium">{brl(total)}</dd></div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><dt className="text-muted-foreground">Pago</dt><dd className="max-w-40 break-all text-right font-medium text-primary">{brl(pago)}</dd></div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3"><dt className="text-muted-foreground">A pagar</dt><dd className="max-w-40 break-all text-right font-medium text-destructive">{brl(pendente)}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Contas pagas</dt><dd>{qtdPagas}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Contas pendentes</dt><dd>{qtdPendentes}</dd></div>
             </dl>
