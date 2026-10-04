@@ -140,6 +140,20 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    min-width: 320px;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+
+  html {
+    background-color: var(--color-primary);
+  }
+
+  button, input, select {
+    touch-action: manipulation;
   }
 }
 
