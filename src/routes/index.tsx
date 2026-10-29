@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
-import { Mercado } from "@/components/Mercado";
+import { Mercado } from "@/components/ui/Mercado";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
