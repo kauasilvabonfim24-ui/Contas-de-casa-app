@@ -86,7 +86,40 @@ export type Database = {
         }
         Relationships: []
       }
-    }
+    }  
+          mantimentos: {
+        Row: {
+          categoria: string
+          comprado: boolean
+          created_at: string
+          id: string
+          nome: string
+          preco: number
+          qtd: number
+          user_id: string
+        }
+        Insert: {
+          categoria?: string
+          comprado?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          preco?: number
+          qtd?: number
+          user_id?: string
+        }
+        Update: {
+          categoria?: string
+          comprado?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          preco?: number
+          qtd?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     Views: {
       [_ in never]: never
     }
