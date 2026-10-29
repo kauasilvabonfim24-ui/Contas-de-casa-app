@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toPng } from "html-to-image";
-
+import { Mercado } from "@/components/Mercado";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -79,7 +79,7 @@ function Painel({ email, nome }: { email: string; nome: string }) {
   const [form, setForm] = useState({ descricao: "", valor: "", vencimento: new Date().toISOString().slice(0, 10), categoria: "Moradia" });
   const [pessoas, setPessoas] = useState(1);
   const [salvarModo, setSalvarModo] = useState<"total" | "parte">("parte");
-  const [aba, setAba] = useState<"contas" | "historico" | "recebidos">("contas");
+   const [aba, setAba] = useState<"contas" | "mercado" | "historico" | "recebidos">("contas");
   const [mostrarComprovante, setMostrarComprovante] = useState(false);
   const [naoLidos, setNaoLidos] = useState(0);
 
@@ -140,20 +140,23 @@ function Painel({ email, nome }: { email: string; nome: string }) {
             <label className="text-sm text-muted-foreground">Mês</label>
             <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="min-w-0 w-full rounded-lg border border-input bg-card px-3 py-2 text-base" />
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button onClick={() => setAba("contas")} className={`rounded-lg px-3 py-2 text-sm font-medium ${aba === "contas" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Contas</button>
-            <button onClick={() => setAba("historico")} className={`rounded-lg px-3 py-2 text-sm font-medium ${aba === "historico" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Histórico</button>
-            <button onClick={() => setAba("recebidos")} className={`relative rounded-lg px-3 py-2 text-sm font-medium ${aba === "recebidos" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                   <div className="grid grid-cols-4 gap-1.5">
+            <button onClick={() => setAba("contas")} className={`rounded-lg px-1 py-2 text-xs font-medium sm:px-3 sm:text-sm ${aba === "contas" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Contas</button>
+            <button onClick={() => setAba("mercado")} className={`rounded-lg px-1 py-2 text-xs font-medium sm:px-3 sm:text-sm ${aba === "mercado" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Mercado</button>
+            <button onClick={() => setAba("historico")} className={`rounded-lg px-1 py-2 text-xs font-medium sm:px-3 sm:text-sm ${aba === "historico" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Histórico</button>
+            <button onClick={() => setAba("recebidos")} className={`relative rounded-lg px-1 py-2 text-xs font-medium sm:px-3 sm:text-sm ${aba === "recebidos" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>
               Recebidos
               {naoLidos > 0 && aba !== "recebidos" && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-accent-foreground">{naoLidos}</span>}
             </button>
           </div>
         </div>
 
-        {aba === "recebidos" ? (
+               {aba === "recebidos" ? (
           <Recebidos email={email} />
         ) : aba === "historico" ? (
           <Historico mesAtual={mes} />
+        ) : aba === "mercado" ? (
+          <Mercado onLancado={carregar} />
         ) : (
           <>
             <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
