@@ -260,20 +260,30 @@ function ResumoCard({ dados, rodape }: { dados: ResumoDados; rodape?: string }) 
             <div className="mb-3 border-t border-dashed border-input" />
             <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Contas</p>
             <ul className="space-y-2 text-sm">
-              {dados.contas.map((c, i) => (
-                <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
-                  <div className="min-w-0">
-                    <p className={`break-words ${c.pago ? "text-muted-foreground line-through" : "font-medium"}`}>{c.descricao}</p>
-                    {c.pessoas > 1 && c.valor_total != null && (
-                      <p className="text-xs text-primary">
-                        Total {brl(c.valor_total)} ÷ {c.pessoas} pessoas = {brl(c.valor_total / c.pessoas)} cada
-                      </p>
-                    )}
-                    <p className="text-[11px] text-muted-foreground">vence {c.vencimento.split("-").reverse().join("/")}{c.pago ? " · paga" : ""}</p>
-                  </div>
-                  <p className="max-w-32 break-all text-right font-medium">{brl(c.valor)}</p>
-                </li>
-              ))}
+                           {dados.contas.map((c, i) => {
+                const dividida = c.pessoas > 1 && c.valor_total != null;
+                return (
+                  <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+                    <div className="min-w-0">
+                      <p className={`break-words ${c.pago ? "text-muted-foreground line-through" : "font-medium"}`}>{c.descricao}</p>
+                      {dividida && (
+                        <p className="text-xs text-primary">Dividida entre {c.pessoas} pessoas</p>
+                      )}
+                      <p className="text-[11px] text-muted-foreground">vence {c.vencimento.split("-").reverse().join("/")}{c.pago ? " · paga" : ""}</p>
+                    </div>
+                    <div className="max-w-40 text-right">
+                      {dividida ? (
+                        <>
+                          <p className="break-all text-xs text-muted-foreground">Total {brl(c.valor_total as number)}</p>
+                          <p className="break-all font-medium">{brl((c.valor_total as number) / c.pessoas)} cada</p>
+                        </>
+                      ) : (
+                        <p className="break-all font-medium">{brl(c.valor)}</p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </>
         )}
