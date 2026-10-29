@@ -122,8 +122,6 @@ function Painel({ email, nome }: { email: string; nome: string }) {
   const pago = contas.filter((c) => c.pago).reduce((s, c) => s + c.valor, 0);
   const pendente = total - pago;
   const hoje = new Date().toISOString().slice(0, 10);
-  const qtdPagas = contas.filter((c) => c.pago).length;
-  const qtdPendentes = contas.length - qtdPagas;
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-background pb-[env(safe-area-inset-bottom)]">
@@ -142,13 +140,19 @@ function Painel({ email, nome }: { email: string; nome: string }) {
             <label className="text-sm text-muted-foreground">Mês</label>
             <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="min-w-0 w-full rounded-lg border border-input bg-card px-3 py-2 text-base" />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button onClick={() => setAba("contas")} className={`rounded-lg px-3 py-2 text-sm font-medium ${aba === "contas" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Contas</button>
             <button onClick={() => setAba("historico")} className={`rounded-lg px-3 py-2 text-sm font-medium ${aba === "historico" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>Histórico</button>
+            <button onClick={() => setAba("recebidos")} className={`relative rounded-lg px-3 py-2 text-sm font-medium ${aba === "recebidos" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+              Recebidos
+              {naoLidos > 0 && aba !== "recebidos" && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-accent-foreground">{naoLidos}</span>}
+            </button>
           </div>
         </div>
 
-        {aba === "historico" ? (
+        {aba === "recebidos" ? (
+          <Recebidos email={email} />
+        ) : aba === "historico" ? (
           <Historico mesAtual={mes} />
         ) : (
           <>
