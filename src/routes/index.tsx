@@ -20,7 +20,13 @@ export const Route = createFileRoute("/")({
 
 type Conta = {
   id: string; descricao: string; valor: number; vencimento: string; categoria: string; pago: boolean;
+  valor_total: number | null; pessoas: number;
 };
+type ResumoDados = {
+  nome: string; mes: string; total: number; pago: number; pendente: number;
+  contas: { descricao: string; valor: number; valor_total: number | null; pessoas: number; pago: boolean; vencimento: string }[];
+};
+type Recebido = { id: string; de_email: string; mes: string; dados: ResumoDados; lido: boolean; created_at: string };
 const CATEGORIAS = ["Moradia", "Energia", "Água", "Internet", "Mercado", "Transporte", "Saúde", "Outros"];
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const mesLabel = (mesIso: string) => {
