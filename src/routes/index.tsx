@@ -212,6 +212,9 @@ function Painel({ email, nome }: { email: string; nome: string }) {
                       <p className={`text-xs ${atrasada ? "text-destructive" : "text-muted-foreground"}`}>
                         {c.categoria} · vence {c.vencimento.split("-").reverse().join("/")}{atrasada && " · atrasada"}
                       </p>
+                      {c.pessoas > 1 && c.valor_total != null && (
+                        <p className="text-xs text-primary">Total {brl(c.valor_total)} ÷ {c.pessoas} = {brl(c.valor_total / c.pessoas)} cada</p>
+                      )}
                       <p className="mt-1 break-all font-semibold sm:hidden">{brl(c.valor)}</p>
                     </div>
                     <div className="flex shrink-0 items-start gap-2">
