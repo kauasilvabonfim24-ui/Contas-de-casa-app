@@ -79,8 +79,15 @@ function Painel({ email, nome }: { email: string; nome: string }) {
   const [form, setForm] = useState({ descricao: "", valor: "", vencimento: new Date().toISOString().slice(0, 10), categoria: "Moradia" });
   const [pessoas, setPessoas] = useState(1);
   const [salvarModo, setSalvarModo] = useState<"total" | "parte">("parte");
-  const [aba, setAba] = useState<"contas" | "historico">("contas");
+  const [aba, setAba] = useState<"contas" | "historico" | "recebidos">("contas");
   const [mostrarComprovante, setMostrarComprovante] = useState(false);
+  const [naoLidos, setNaoLidos] = useState(0);
+
+  useEffect(() => {
+    supabase.from("compartilhamentos").select("id", { count: "exact", head: true })
+      .eq("para_email", email.toLowerCase()).eq("lido", false)
+      .then(({ count }) => setNaoLidos(count ?? 0));
+  }, [aba, email]);
 
   const valorNum = Number(form.valor) || 0;
   const porPessoa = pessoas > 1 ? valorNum / pessoas : valorNum;
@@ -91,7 +98,7 @@ function Painel({ email, nome }: { email: string; nome: string }) {
     const { data } = await supabase.from("contas").select("*")
       .gte("vencimento", `${mes}-01`).lte("vencimento", `${mes}-${String(fim).padStart(2, "0")}`)
       .order("vencimento");
-    setContas((data ?? []).map((c) => ({ ...c, valor: Number(c.valor) })));
+    setContas((data ?? []).map((c) => ({ ...c, valor: Number(c.valor), valor_total: c.valor_total == null ? null : Number(c.valor_total) })));
   }
   useEffect(() => { carregar(); }, [mes]);
 
@@ -99,10 +106,11 @@ function Painel({ email, nome }: { email: string; nome: string }) {
     e.preventDefault();
     const dividida = pessoas > 1;
     const valorFinal = dividida && salvarModo === "parte" ? porPessoa : valorNum;
-    const descricao = dividida && salvarModo === "total"
-      ? `${form.descricao} (${brl(porPessoa)}/pessoa × ${pessoas})`
-      : form.descricao;
-    await supabase.from("contas").insert({ descricao, valor: Math.round(valorFinal * 100) / 100, vencimento: form.vencimento, categoria: form.categoria });
+    const descricao = form.descricao;
+    await supabase.from("contas").insert({
+      descricao, valor: Math.round(valorFinal * 100) / 100, vencimento: form.vencimento, categoria: form.categoria,
+      pessoas, valor_total: dividida ? valorNum : null,
+    });
     setForm({ ...form, descricao: "", valor: "" });
     setPessoas(1);
     carregar();
