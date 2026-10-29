@@ -8,6 +8,13 @@
       "when": 1790606428263,
       "tag": "0000_create_contas",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793275739388,
+      "tag": "0001_divisao_e_compartilhamento",
+      "breakpoints": true
     }
   ]
 }
