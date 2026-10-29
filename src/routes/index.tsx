@@ -404,72 +404,180 @@ function Recebidos({ email }: { email: string }) {
   );
 }
 
-/** Gráfico simples (SVG, sem dependências) do total e do pago nos últimos 6 meses. */
-function Historico({ mesAtual }: { mesAtual: string }) {
-  const [pontos, setPontos] = useState<{ mes: string; total: number; pago: number }[]>([]);
+type ContaHist = { descricao: string; valor: number; valor_total: number | null; pessoas: number; pago: boolean; vencimento: string; categoria: string };
+type MesHist = { mes: string; total: number; pago: number; contas: ContaHist[] };
+
+/** Histórico: gráfico dos últimos 12 meses + detalhes e resumo de cada mês já registrado. */
+function Historico({ mesAtual, email, nome }: { mesAtual: string; email: string; nome: string }) {
+  const [meses, setMeses] = useState<MesHist[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [qtd, setQtd] = useState(12);
+  const [aberto, setAberto] = useState<string | null>(null);
+  const [resumo, setResumo] = useState<ResumoDados | null>(null);
 
   useEffect(() => {
     (async () => {
       setCarregando(true);
       const [y, m] = mesAtual.split("-").map(Number) as [number, number];
-      const inicio = new Date(y, m - 6, 1);
+      const inicio = new Date(y, m - qtd, 1);
       const inicioIso = `${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, "0")}-01`;
       const fimData = new Date(y, m, 0);
       const fimIso = `${fimData.getFullYear()}-${String(fimData.getMonth() + 1).padStart(2, "0")}-${String(fimData.getDate()).padStart(2, "0")}`;
 
-      const { data } = await supabase.from("contas").select("valor, vencimento, pago")
-        .gte("vencimento", inicioIso).lte("vencimento", fimIso);
+      const { data } = await supabase.from("contas")
+        .select("descricao, valor, valor_total, pessoas, pago, vencimento, categoria")
+        .gte("vencimento", inicioIso).lte("vencimento", fimIso).order("vencimento");
 
-      const meses: { mes: string; total: number; pago: number }[] = [];
-      for (let i = 5; i >= 0; i--) {
+      const lista: MesHist[] = [];
+      for (let i = qtd - 1; i >= 0; i--) {
         const d = new Date(y, m - 1 - i, 1);
-        meses.push({ mes: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, total: 0, pago: 0 });
+        lista.push({ mes: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, total: 0, pago: 0, contas: [] });
       }
       for (const c of data ?? []) {
-        const chave = c.vencimento.slice(0, 7);
-        const alvo = meses.find((p) => p.mes === chave);
+        const alvo = lista.find((p) => p.mes === c.vencimento.slice(0, 7));
         if (!alvo) continue;
-        alvo.total += Number(c.valor);
-        if (c.pago) alvo.pago += Number(c.valor);
+        const valor = Number(c.valor);
+        alvo.total += valor;
+        if (c.pago) alvo.pago += valor;
+        alvo.contas.push({
+          descricao: c.descricao, valor, valor_total: c.valor_total == null ? null : Number(c.valor_total),
+          pessoas: c.pessoas, pago: c.pago, vencimento: c.vencimento, categoria: c.categoria,
+        });
       }
-      setPontos(meses);
+      setMeses(lista);
       setCarregando(false);
     })();
-  }, [mesAtual]);
+  }, [mesAtual, qtd]);
 
-  if (carregando) return <div className="rounded-xl bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">Carregando histórico…</div>;
+  if (carregando && meses.length === 0) return <div className="rounded-xl bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">Carregando histórico…</div>;
 
-  const max = Math.max(1, ...pontos.map((p) => p.total));
-  const media = pontos.reduce((s, p) => s + p.total, 0) / (pontos.length || 1);
-  const nomesMes = pontos.map((p) => {
-    const [, mm = 1] = p.mes.split("-").map(Number);
+  const grafico = meses.slice(-12);
+  const max = Math.max(1, ...grafico.map((p) => p.total));
+  const comContas = meses.filter((p) => p.contas.length > 0);
+  const media = comContas.reduce((s, p) => s + p.total, 0) / (comContas.length || 1);
+  const maior = comContas.reduce<MesHist | null>((a, p) => (!a || p.total > a.total ? p : a), null);
+  const nomeMes = (mes: string) => {
+    const [, mm = 1] = mes.split("-").map(Number);
     return new Date(2000, mm - 1, 1).toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
-  });
+  };
+  const lista = [...meses].reverse().filter((p) => p.contas.length > 0);
+
+  function abrirResumo(p: MesHist) {
+    setResumo({
+      nome: nome || email.split("@")[0] || email, mes: p.mes, total: p.total, pago: p.pago, pendente: p.total - p.pago,
+      contas: p.contas.map((c) => ({ descricao: c.descricao, valor: c.valor, valor_total: c.valor_total, pessoas: c.pessoas, pago: c.pago, vencimento: c.vencimento })),
+    });
+  }
 
   return (
     <div className="space-y-3">
       <div className="rounded-xl bg-card p-4 shadow-sm">
         <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-sm bg-primary" />Total do mês</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-sm bg-accent" />Pago</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-sm bg-primary/25" />Total do mês</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-sm bg-primary" />Pago</span>
         </div>
-        <div className="flex h-40 items-end gap-3">
-          {pontos.map((p, i) => (
-            <div key={p.mes} className="flex flex-1 flex-col items-center gap-1">
-              <div className="relative flex h-32 w-full items-end justify-center gap-1">
+        <div className="flex h-40 items-end gap-1.5 sm:gap-3">
+          {grafico.map((p) => (
+            <button key={p.mes} onClick={() => setAberto(p.mes)} className="flex min-w-0 flex-1 flex-col items-center gap-1" aria-label={`Ver ${mesLabel(p.mes)}`}>
+              <div className="relative flex h-32 w-full items-end justify-center gap-0.5">
                 <div className="w-1/2 rounded-t bg-primary/25" style={{ height: `${(p.total / max) * 100}%` }} title={brl(p.total)} />
                 <div className="w-1/2 rounded-t bg-primary" style={{ height: `${(p.pago / max) * 100}%` }} title={brl(p.pago)} />
               </div>
-              <span className="text-[11px] text-muted-foreground">{nomesMes[i]}</span>
-            </div>
+              <span className={`text-[10px] sm:text-[11px] ${p.mes === mesAtual ? "font-bold text-primary" : "text-muted-foreground"}`}>{nomeMes(p.mes)}</span>
+            </button>
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-xl bg-card px-4 py-3 shadow-sm">
-        <span className="text-xs text-muted-foreground">Média de contas por mês</span>
-        <span className="font-semibold text-primary">{brl(media)}</span>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="min-w-0 rounded-xl bg-card p-3 shadow-sm">
+          <p className="text-xs text-muted-foreground">Média por mês</p>
+          <p className="break-all font-semibold text-primary">{brl(media)}</p>
+        </div>
+        <div className="min-w-0 rounded-xl bg-card p-3 shadow-sm">
+          <p className="text-xs text-muted-foreground">Mês mais caro</p>
+          <p className="break-all font-semibold text-primary">{maior ? brl(maior.total) : "—"}</p>
+          {maior && <p className="text-[11px] text-muted-foreground">{mesLabel(maior.mes)}</p>}
+        </div>
       </div>
+
+      <p className="pt-1 text-xs font-semibold uppercase text-muted-foreground">Meses registrados</p>
+      {lista.length === 0 && <p className="rounded-xl bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">Nenhuma conta registrada nesse período.</p>}
+
+      {lista.map((p) => {
+        const idx = meses.findIndex((x) => x.mes === p.mes);
+        const anterior = idx > 0 ? meses[idx - 1] : undefined;
+        const variacao = anterior && anterior.total > 0 ? ((p.total - anterior.total) / anterior.total) * 100 : null;
+        const pendente = p.total - p.pago;
+        const qtdPagas = p.contas.filter((c) => c.pago).length;
+        const porCategoria = Object.entries(
+          p.contas.reduce<Record<string, number>>((acc, c) => { acc[c.categoria] = (acc[c.categoria] ?? 0) + c.valor; return acc; }, {}),
+        ).sort((a, b) => b[1] - a[1]);
+        const aberta = aberto === p.mes;
+        return (
+          <section key={p.mes} className="overflow-hidden rounded-xl bg-card shadow-sm">
+            <button onClick={() => setAberto(aberta ? null : p.mes)} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 p-3 text-left" aria-expanded={aberta}>
+              <div className="min-w-0">
+                <p className="font-semibold">{mesLabel(p.mes)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {p.contas.length} {p.contas.length === 1 ? "conta" : "contas"} · {qtdPagas} {qtdPagas === 1 ? "paga" : "pagas"}
+                  {pendente > 0.009 && <span className="text-destructive"> · falta {brl(pendente)}</span>}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="break-all font-semibold text-primary">{brl(p.total)}</p>
+                {variacao !== null && Math.abs(variacao) >= 0.5 && (
+                  <p className={`text-[11px] ${variacao > 0 ? "text-destructive" : "text-primary"}`}>{variacao > 0 ? "▲" : "▼"} {Math.abs(variacao).toFixed(0)}% vs mês anterior</p>
+                )}
+              </div>
+            </button>
+
+            {aberta && (
+              <div className="space-y-3 border-t border-dashed border-input p-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="min-w-0 rounded-lg bg-background p-2"><p className="text-[11px] text-muted-foreground">Total</p><p className="break-all text-sm font-semibold">{brl(p.total)}</p></div>
+                  <div className="min-w-0 rounded-lg bg-background p-2"><p className="text-[11px] text-muted-foreground">Pago</p><p className="break-all text-sm font-semibold text-primary">{brl(p.pago)}</p></div>
+                  <div className="min-w-0 rounded-lg bg-background p-2"><p className="text-[11px] text-muted-foreground">A pagar</p><p className="break-all text-sm font-semibold text-destructive">{brl(pendente)}</p></div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Por categoria</p>
+                  {porCategoria.map(([cat, v]) => (
+                    <div key={cat} className="space-y-0.5">
+                      <div className="flex justify-between gap-3 text-sm"><span className="min-w-0 break-words">{cat}</span><span className="shrink-0 font-medium">{brl(v)}</span></div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${p.total > 0 ? (v / p.total) * 100 : 0}%` }} /></div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Contas do mês</p>
+                  <ul className="space-y-2 text-sm">
+                    {p.contas.map((c, i) => (
+                      <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+                        <div className="min-w-0">
+                          <p className={`break-words ${c.pago ? "text-muted-foreground line-through" : "font-medium"}`}>{c.descricao}</p>
+                          <p className="text-[11px] text-muted-foreground">{c.categoria} · vence {c.vencimento.split("-").reverse().join("/")}{c.pago ? " · paga" : " · não paga"}</p>
+                          {c.pessoas > 1 && c.valor_total != null && <p className="text-[11px] text-primary">Total {brl(c.valor_total)} ÷ {c.pessoas} = {brl(c.valor_total / c.pessoas)} cada</p>}
+                        </div>
+                        <p className="max-w-32 break-all text-right font-medium">{brl(c.valor)}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <button onClick={() => abrirResumo(p)} className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground">Ver e compartilhar resumo deste mês</button>
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      <button onClick={() => setQtd((q) => q + 12)} disabled={carregando} className="w-full rounded-lg border border-input bg-card py-2.5 text-sm font-medium disabled:opacity-60">
+        {carregando ? "Carregando…" : "Ver mais 12 meses"}
+      </button>
+
+      {resumo && <Comprovante dados={resumo} meuEmail={email} onFechar={() => setResumo(null)} />}
     </div>
   );
 }
